@@ -1,0 +1,28 @@
+{
+	"name": "Cosmos_Product_SOURCE",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "CosmosDB",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "CosmosDbSqlApiCollection",
+		"schema": {
+			"type": "object",
+			"properties": {
+				"ProductID": {
+					"type": "integer"
+				},
+				"ProductName": {
+					"type": "string"
+				},
+				"Price": {
+					"type": "number"
+				}
+			}
+		},
+		"typeProperties": {
+			"collectionName": "products"
+		}
+	}
+}
