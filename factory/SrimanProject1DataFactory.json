@@ -1,0 +1,9 @@
+{
+	"name": "SrimanProject1DataFactory",
+	"location": "centralus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "eb405952-313f-4ab2-aa8e-c296bb0589a4",
+		"tenantId": "4130bd39-7c53-419c-b1e5-8758d6d63f21"
+	}
+}
