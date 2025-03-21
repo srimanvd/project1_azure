@@ -18,6 +18,26 @@
 		"Cosmos_Product_SOURCE_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'Cosmos_Product_SOURCE'"
+		},
+		"PostgresDB_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'PostgresDB'"
+		},
+		"AzureSqlDatabase_SINK_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'AzureSqlDatabase_SINK'"
+		},
+		"AzureSqlDatabase_SINK_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "srimanserver.database.windows.net"
+		},
+		"AzureSqlDatabase_SINK_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "srimanazuredb"
+		},
+		"AzureSqlDatabase_SINK_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "Project1"
 		}
 	},
 	"variables": {
@@ -64,7 +84,43 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Cosmos_Product_SOURCE')]",
+			"name": "[concat(parameters('factoryName'), '/PostgresDB')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzurePostgreSql",
+				"version": "1.0",
+				"typeProperties": {
+					"connectionString": "[parameters('PostgresDB_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase_SINK')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_server')]",
+					"database": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('AzureSqlDatabase_SINK_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CosmosDB_Product_SOURCE')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -97,7 +153,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Cosmos_realistic_customer_SOURCE')]",
+			"name": "[concat(parameters('factoryName'), '/CosmosDB_realistic_customer_SOURCE')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -166,7 +222,53 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/realistic_customer')]",
+			"name": "[concat(parameters('factoryName'), '/AzurePostgreSqlTable_Orders_SOURCE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgresDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzurePostgreSqlTable",
+				"schema": [
+					{
+						"name": "orderid",
+						"type": "integer",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "customerid",
+						"type": "integer",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "orderdate",
+						"type": "timestamp without time zone",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "paymentstatus",
+						"type": "character varying",
+						"precision": 0,
+						"scale": 0
+					}
+				],
+				"typeProperties": {
+					"schema": "public",
+					"table": "orders"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgresDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/BlobStorage_realistic_customer_SOURCE')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -216,6 +318,708 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/Blob_realistic_customer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzurePostgreSqlTable_orderdetails_SOURCE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgresDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzurePostgreSqlTable",
+				"schema": [
+					{
+						"name": "orderdetailid",
+						"type": "integer",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "orderid",
+						"type": "integer",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "productid",
+						"type": "integer",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "quantity",
+						"type": "integer",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "price",
+						"type": "numeric",
+						"precision": 10,
+						"scale": 2
+					}
+				],
+				"typeProperties": {
+					"schema": "public",
+					"table": "orderdetails"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgresDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable_AlternateEmails_SINK')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase_SINK",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "AlternateEmailID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "EmailAddress",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "AlternateEmails"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase_SINK')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable_ConversationMessages_SINK')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase_SINK",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ConversationID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SupportAgent",
+						"type": "varchar"
+					},
+					{
+						"name": "MessageSender",
+						"type": "varchar"
+					},
+					{
+						"name": "Message",
+						"type": "text"
+					},
+					{
+						"name": "Timestamp",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "ConversationMessages"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase_SINK')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable_Conversations_SINK')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase_SINK",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ConversationID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Conversations"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase_SINK')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable_Customer_SINK')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase_SINK",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "FirstName",
+						"type": "varchar"
+					},
+					{
+						"name": "LastName",
+						"type": "varchar"
+					},
+					{
+						"name": "PrimaryEmailAddress",
+						"type": "varchar"
+					},
+					{
+						"name": "PhoneNumber",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Customer"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase_SINK')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable_Orders_SINK')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase_SINK",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "OrderID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "PaymentStatus",
+						"type": "varchar"
+					},
+					{
+						"name": "OrderTotal",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "OrderDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Orders"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase_SINK')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "AzurePostgreSqlTable_orderdetails_SOURCE",
+								"type": "DatasetReference"
+							},
+							"name": "orderdetails"
+						},
+						{
+							"dataset": {
+								"referenceName": "AzurePostgreSqlTable_Orders_SOURCE",
+								"type": "DatasetReference"
+							},
+							"name": "orders"
+						},
+						{
+							"dataset": {
+								"referenceName": "BlobStorage_realistic_customer_SOURCE",
+								"type": "DatasetReference"
+							},
+							"name": "SQLTableRealisticCustomers"
+						},
+						{
+							"dataset": {
+								"referenceName": "CosmosDB_Product_SOURCE",
+								"type": "DatasetReference"
+							},
+							"name": "product"
+						},
+						{
+							"dataset": {
+								"referenceName": "CosmosDB_realistic_customer_SOURCE",
+								"type": "DatasetReference"
+							},
+							"name": "CosmosRealisticCustomers"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_Customer_SINK",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSINK"
+						},
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_AlternateEmails_SINK",
+								"type": "DatasetReference"
+							},
+							"name": "alternateEmails"
+						},
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_Conversations_SINK",
+								"type": "DatasetReference"
+							},
+							"name": "conversations"
+						},
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_ConversationMessages_SINK",
+								"type": "DatasetReference"
+							},
+							"name": "conversationMessages"
+						},
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable_Orders_SINK",
+								"type": "DatasetReference"
+							},
+							"name": "ordersSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "FormattedPhoneNumber",
+							"description": "Creating/updating the columns 'CustomerID, Name, Email, Phone, LastPurchaseDate, TotalSpent'"
+						},
+						{
+							"name": "joinBlob"
+						},
+						{
+							"name": "customerIDtoINT"
+						},
+						{
+							"name": "SelectFields"
+						},
+						{
+							"name": "AlternateEmail"
+						},
+						{
+							"name": "SelectConversation"
+						},
+						{
+							"name": "flattenConversations"
+						},
+						{
+							"name": "ConversationID"
+						},
+						{
+							"name": "castID"
+						},
+						{
+							"name": "GetMessages"
+						},
+						{
+							"name": "flattenMessages"
+						},
+						{
+							"name": "selectMessageInfo"
+						},
+						{
+							"name": "ItemTotal"
+						},
+						{
+							"name": "SelectIDandItemTotal"
+						},
+						{
+							"name": "addItemTotal"
+						},
+						{
+							"name": "joinTotal"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          orderdetailid as integer,",
+						"          orderid as integer,",
+						"          productid as integer,",
+						"          quantity as integer,",
+						"          price as decimal(10,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> orderdetails",
+						"source(output(",
+						"          orderid as integer,",
+						"          customerid as integer,",
+						"          orderdate as timestamp,",
+						"          paymentstatus as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> orders",
+						"source(output(",
+						"          CustomerID as string,",
+						"          Name as string,",
+						"          Email as string,",
+						"          Phone as string,",
+						"          LastPurchaseDate as string,",
+						"          TotalSpent as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> SQLTableRealisticCustomers",
+						"source(output(",
+						"          ProductID as integer,",
+						"          ProductName as string,",
+						"          Price as double",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'document') ~> product",
+						"source(output(",
+						"          CustomerID as short,",
+						"          Profile as (FirstName as string, LastName as string, Email as string),",
+						"          Conversations as (ConversationID as string, Messages as (DateTime as timestamp, Message as string, Sender as string, SupportAgent as string)[])[]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'document') ~> CosmosRealisticCustomers",
+						"SQLTableRealisticCustomers derive(FormattedPhone = iif(\r",
+						"  length(regexReplace(Phone, '[^0-9]', '')) == 10,\r",
+						"  concat(\r",
+						"    substring(regexReplace(Phone, '[^0-9]', ''), 1, 3),\r",
+						"    '-',\r",
+						"    substring(regexReplace(Phone, '[^0-9]', ''), 4, 3),\r",
+						"    '-',\r",
+						"    substring(regexReplace(Phone, '[^0-9]', ''), 7, 4)\r",
+						"  ),\r",
+						"  \"invalid\"\r",
+						")\r",
+						") ~> FormattedPhoneNumber",
+						"CosmosRealisticCustomers, customerIDtoINT join(CosmosRealisticCustomers@CustomerID == customerIDtoINT@CustomerID,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinBlob",
+						"FormattedPhoneNumber cast(output(",
+						"          CustomerID as integer",
+						"     ),",
+						"     errors: true) ~> customerIDtoINT",
+						"joinBlob select(mapColumn(",
+						"          CustomerID = CosmosRealisticCustomers@CustomerID,",
+						"          FirstName = Profile.FirstName,",
+						"          LastName = Profile.LastName,",
+						"          Email = Profile.Email,",
+						"          Phone = FormattedPhone",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectFields",
+						"joinBlob derive(AlterateEmail = iif(Email == Profile.Email, 'None', Email)) ~> AlternateEmail",
+						"joinBlob select(mapColumn(",
+						"          CustomerID = CosmosRealisticCustomers@CustomerID,",
+						"          Conversations = Conversations",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectConversation",
+						"SelectConversation foldDown(unroll(Conversations),",
+						"     mapColumn(",
+						"          CustomerID,",
+						"          Conversations",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenConversations",
+						"flattenConversations derive(INTConversationID = regexReplace(Conversations.ConversationID, '[^0-9]', '')) ~> ConversationID",
+						"ConversationID cast(output(",
+						"          INTConversationID as integer",
+						"     ),",
+						"     errors: true) ~> castID",
+						"castID select(mapColumn(",
+						"          INTConversationID,",
+						"          Messages = Conversations.Messages",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> GetMessages",
+						"GetMessages foldDown(unroll(Messages),",
+						"     mapColumn(",
+						"          INTConversationID,",
+						"          Messages",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenMessages",
+						"flattenMessages select(mapColumn(",
+						"          INTConversationID,",
+						"          SupportAgent = Messages.SupportAgent,",
+						"          Sender = Messages.Sender,",
+						"          Message = Messages.Message,",
+						"          DateTime = Messages.DateTime",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selectMessageInfo",
+						"orderdetails derive(ItemTotal = multiply(quantity, price)) ~> ItemTotal",
+						"ItemTotal select(mapColumn(",
+						"          orderid,",
+						"          ItemTotal",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectIDandItemTotal",
+						"SelectIDandItemTotal aggregate(groupBy(orderid),",
+						"     ItemTotal = sum(ItemTotal)) ~> addItemTotal",
+						"orders, addItemTotal join(orders@orderid == addItemTotal@orderid,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinTotal",
+						"SelectFields sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          PrimaryEmailAddress as string,",
+						"          PhoneNumber as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          CustomerID,",
+						"          FirstName,",
+						"          LastName,",
+						"          PrimaryEmailAddress = Email,",
+						"          PhoneNumber = Phone",
+						"     )) ~> CustomerSINK",
+						"AlternateEmail sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          AlternateEmailID as integer,",
+						"          CustomerID as integer,",
+						"          EmailAddress as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          AlternateEmailID = CosmosRealisticCustomers@CustomerID,",
+						"          CustomerID = CosmosRealisticCustomers@CustomerID,",
+						"          EmailAddress = AlterateEmail",
+						"     )) ~> alternateEmails",
+						"castID sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          ConversationID as integer,",
+						"          CustomerID as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          ConversationID = INTConversationID,",
+						"          CustomerID",
+						"     )) ~> conversations",
+						"selectMessageInfo sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          ConversationID as integer,",
+						"          SupportAgent as string,",
+						"          MessageSender as string,",
+						"          Message as string,",
+						"          Timestamp as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          ConversationID = INTConversationID,",
+						"          SupportAgent,",
+						"          MessageSender = Sender,",
+						"          Message,",
+						"          Timestamp = DateTime",
+						"     )) ~> conversationMessages",
+						"joinTotal sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          OrderID as integer,",
+						"          CustomerID as integer,",
+						"          PaymentStatus as string,",
+						"          OrderTotal as decimal(10,2),",
+						"          OrderDate as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          OrderID = orders@orderid,",
+						"          CustomerID = customerid,",
+						"          PaymentStatus = paymentstatus,",
+						"          OrderTotal = ItemTotal,",
+						"          OrderDate = orderdate",
+						"     )) ~> ordersSink"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/AzurePostgreSqlTable_orderdetails_SOURCE')]",
+				"[concat(variables('factoryId'), '/datasets/AzurePostgreSqlTable_Orders_SOURCE')]",
+				"[concat(variables('factoryId'), '/datasets/BlobStorage_realistic_customer_SOURCE')]",
+				"[concat(variables('factoryId'), '/datasets/CosmosDB_Product_SOURCE')]",
+				"[concat(variables('factoryId'), '/datasets/CosmosDB_realistic_customer_SOURCE')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable_Customer_SINK')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable_AlternateEmails_SINK')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable_Conversations_SINK')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable_ConversationMessages_SINK')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable_Orders_SINK')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"orderdetails": {},
+									"orders": {},
+									"SQLTableRealisticCustomers": {},
+									"product": {},
+									"CosmosRealisticCustomers": {},
+									"CustomerSINK": {},
+									"alternateEmails": {},
+									"conversations": {},
+									"conversationMessages": {},
+									"ordersSink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
 			]
 		}
 	]

@@ -14,6 +14,21 @@
 		"Cosmos_Product_SOURCE_connectionString": {
 			"value": ""
 		},
+		"PostgresDB_connectionString": {
+			"value": ""
+		},
+		"AzureSqlDatabase_SINK_password": {
+			"value": ""
+		},
+		"AzureSqlDatabase_SINK_properties_typeProperties_server": {
+			"value": "srimanserver.database.windows.net"
+		},
+		"AzureSqlDatabase_SINK_properties_typeProperties_database": {
+			"value": "srimanazuredb"
+		},
+		"AzureSqlDatabase_SINK_properties_typeProperties_userName": {
+			"value": "Project1"
+		},
 		"containerUri": {
 			"value": ""
 		},
