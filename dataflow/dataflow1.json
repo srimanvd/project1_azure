@@ -61,6 +61,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "conversations"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_ConversationMessages_SINK",
+						"type": "DatasetReference"
+					},
+					"name": "conversationMessages"
 				}
 			],
 			"transformations": [
@@ -91,6 +98,15 @@
 				},
 				{
 					"name": "castID"
+				},
+				{
+					"name": "GetMessages"
+				},
+				{
+					"name": "flattenMessages"
+				},
+				{
+					"name": "select1"
 				}
 			],
 			"scriptLines": [
@@ -135,9 +151,9 @@
 				"     validateSchema: false,",
 				"     format: 'document') ~> product",
 				"source(output(",
-				"          CustomerID as integer,",
+				"          CustomerID as short,",
 				"          Profile as (FirstName as string, LastName as string, Email as string),",
-				"          Conversations as (ConversationID as string, Messages as (DateTime as string, Sender as string, Message as string)[])[]",
+				"          Conversations as (ConversationID as string, Messages as (DateTime as timestamp, Message as string, Sender as string, SupportAgent as string)[])[]",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
@@ -191,6 +207,28 @@
 				"          INTConversationID as integer",
 				"     ),",
 				"     errors: true) ~> castID",
+				"castID select(mapColumn(",
+				"          INTConversationID,",
+				"          Messages = Conversations.Messages",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> GetMessages",
+				"GetMessages foldDown(unroll(Messages),",
+				"     mapColumn(",
+				"          INTConversationID,",
+				"          Messages",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenMessages",
+				"flattenMessages select(mapColumn(",
+				"          INTConversationID,",
+				"          SupportAgent = Messages.SupportAgent,",
+				"          Sender = Messages.Sender,",
+				"          Message = Messages.Message,",
+				"          DateTime = Messages.DateTime",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
 				"SelectFields sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -252,7 +290,31 @@
 				"     mapColumn(",
 				"          ConversationID = INTConversationID,",
 				"          CustomerID",
-				"     )) ~> conversations"
+				"     )) ~> conversations",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ConversationID as integer,",
+				"          SupportAgent as string,",
+				"          MessageSender as string,",
+				"          Message as string,",
+				"          Timestamp as timestamp",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          ConversationID = INTConversationID,",
+				"          SupportAgent,",
+				"          MessageSender = Sender,",
+				"          Message,",
+				"          Timestamp = DateTime",
+				"     )) ~> conversationMessages"
 			]
 		}
 	}
