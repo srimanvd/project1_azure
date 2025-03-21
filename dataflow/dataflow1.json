@@ -126,9 +126,6 @@
 				},
 				{
 					"name": "joinTotal"
-				},
-				{
-					"name": "TotalToDec"
 				}
 			],
 			"scriptLines": [
@@ -265,10 +262,6 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> joinTotal",
-				"joinTotal cast(output(",
-				"          ItemTotal as decimal(10,0)",
-				"     ),",
-				"     errors: true) ~> TotalToDec",
 				"SelectFields sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -355,7 +348,7 @@
 				"          Message,",
 				"          Timestamp = DateTime",
 				"     )) ~> conversationMessages",
-				"TotalToDec sink(allowSchemaDrift: true,",
+				"joinTotal sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          OrderID as integer,",
