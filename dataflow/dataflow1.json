@@ -1,0 +1,97 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "AzurePostgreSqlTable_orderdetails_SOURCE",
+						"type": "DatasetReference"
+					},
+					"name": "orderdetails"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzurePostgreSqlTable_Orders_SOURCE",
+						"type": "DatasetReference"
+					},
+					"name": "orders"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzurePostgreSqlTable_realistic_customer_SOURCE",
+						"type": "DatasetReference"
+					},
+					"name": "SQLTableRealisticCustomers"
+				},
+				{
+					"dataset": {
+						"referenceName": "CosmosDB_Product_SOURCE",
+						"type": "DatasetReference"
+					},
+					"name": "product"
+				},
+				{
+					"dataset": {
+						"referenceName": "CosmosDB_realistic_customer_SOURCE",
+						"type": "DatasetReference"
+					},
+					"name": "CosmosRealisticCustomers"
+				}
+			],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          orderdetailid as integer,",
+				"          orderid as integer,",
+				"          productid as integer,",
+				"          quantity as integer,",
+				"          price as decimal(10,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> orderdetails",
+				"source(output(",
+				"          orderid as integer,",
+				"          customerid as integer,",
+				"          orderdate as timestamp,",
+				"          paymentstatus as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> orders",
+				"source(output(",
+				"          CustomerID as string,",
+				"          Name as string,",
+				"          Email as string,",
+				"          Phone as string,",
+				"          LastPurchaseDate as string,",
+				"          TotalSpent as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> SQLTableRealisticCustomers",
+				"source(output(",
+				"          ProductID as integer,",
+				"          ProductName as string,",
+				"          Price as double",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'document') ~> product",
+				"source(output(",
+				"          CustomerID as integer,",
+				"          Profile as (FirstName as string, LastName as string, Email as string),",
+				"          Conversations as (ConversationID as string, Messages as (DateTime as string, Sender as string, Message as string)[])[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'document') ~> CosmosRealisticCustomers"
+			]
+		}
+	}
+}

@@ -1,5 +1,5 @@
 {
-	"name": "Cosmos_realistic_customer_SOURCE",
+	"name": "CosmosDB_realistic_customer_SOURCE",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "CosmosDB",

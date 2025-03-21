@@ -1,5 +1,5 @@
 {
-	"name": "realistic_customer",
+	"name": "AzurePostgreSqlTable_realistic_customer_SOURCE",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "Blob_realistic_customer",
