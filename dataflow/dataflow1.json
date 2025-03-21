@@ -20,7 +20,7 @@
 				},
 				{
 					"dataset": {
-						"referenceName": "AzurePostgreSqlTable_realistic_customer_SOURCE",
+						"referenceName": "BlobStorage_realistic_customer_SOURCE",
 						"type": "DatasetReference"
 					},
 					"name": "SQLTableRealisticCustomers"
@@ -40,8 +40,59 @@
 					"name": "CosmosRealisticCustomers"
 				}
 			],
-			"sinks": [],
-			"transformations": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_Customer_SINK",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerSINK"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_AlternateEmails_SINK",
+						"type": "DatasetReference"
+					},
+					"name": "alternateEmails"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_Conversations_SINK",
+						"type": "DatasetReference"
+					},
+					"name": "conversations"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FormattedPhoneNumber",
+					"description": "Creating/updating the columns 'CustomerID, Name, Email, Phone, LastPurchaseDate, TotalSpent'"
+				},
+				{
+					"name": "joinBlob"
+				},
+				{
+					"name": "customerIDtoINT"
+				},
+				{
+					"name": "SelectFields"
+				},
+				{
+					"name": "AlternateEmail"
+				},
+				{
+					"name": "SelectConversation"
+				},
+				{
+					"name": "flattenConversations"
+				},
+				{
+					"name": "ConversationID"
+				},
+				{
+					"name": "castID"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          orderdetailid as integer,",
@@ -90,7 +141,118 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     format: 'document') ~> CosmosRealisticCustomers"
+				"     format: 'document') ~> CosmosRealisticCustomers",
+				"SQLTableRealisticCustomers derive(FormattedPhone = iif(\r",
+				"  length(regexReplace(Phone, '[^0-9]', '')) == 10,\r",
+				"  concat(\r",
+				"    substring(regexReplace(Phone, '[^0-9]', ''), 1, 3),\r",
+				"    '-',\r",
+				"    substring(regexReplace(Phone, '[^0-9]', ''), 4, 3),\r",
+				"    '-',\r",
+				"    substring(regexReplace(Phone, '[^0-9]', ''), 7, 4)\r",
+				"  ),\r",
+				"  \"invalid\"\r",
+				")\r",
+				") ~> FormattedPhoneNumber",
+				"CosmosRealisticCustomers, customerIDtoINT join(CosmosRealisticCustomers@CustomerID == customerIDtoINT@CustomerID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinBlob",
+				"FormattedPhoneNumber cast(output(",
+				"          CustomerID as integer",
+				"     ),",
+				"     errors: true) ~> customerIDtoINT",
+				"joinBlob select(mapColumn(",
+				"          CustomerID = CosmosRealisticCustomers@CustomerID,",
+				"          FirstName = Profile.FirstName,",
+				"          LastName = Profile.LastName,",
+				"          Email = Profile.Email,",
+				"          Phone = FormattedPhone",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectFields",
+				"joinBlob derive(AlterateEmail = iif(Email == Profile.Email, 'None', Email)) ~> AlternateEmail",
+				"joinBlob select(mapColumn(",
+				"          CustomerID = CosmosRealisticCustomers@CustomerID,",
+				"          Conversations = Conversations",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectConversation",
+				"SelectConversation foldDown(unroll(Conversations),",
+				"     mapColumn(",
+				"          CustomerID,",
+				"          Conversations",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenConversations",
+				"flattenConversations derive(INTConversationID = regexReplace(Conversations.ConversationID, '[^0-9]', '')) ~> ConversationID",
+				"ConversationID cast(output(",
+				"          INTConversationID as integer",
+				"     ),",
+				"     errors: true) ~> castID",
+				"SelectFields sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CustomerID as integer,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          PrimaryEmailAddress as string,",
+				"          PhoneNumber as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          CustomerID,",
+				"          FirstName,",
+				"          LastName,",
+				"          PrimaryEmailAddress = Email,",
+				"          PhoneNumber = Phone",
+				"     )) ~> CustomerSINK",
+				"AlternateEmail sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          AlternateEmailID as integer,",
+				"          CustomerID as integer,",
+				"          EmailAddress as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          AlternateEmailID = CosmosRealisticCustomers@CustomerID,",
+				"          CustomerID = CosmosRealisticCustomers@CustomerID,",
+				"          EmailAddress = AlterateEmail",
+				"     )) ~> alternateEmails",
+				"castID sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ConversationID as integer,",
+				"          CustomerID as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          ConversationID = INTConversationID,",
+				"          CustomerID",
+				"     )) ~> conversations"
 			]
 		}
 	}
