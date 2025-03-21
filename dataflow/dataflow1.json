@@ -68,6 +68,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "conversationMessages"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable_Orders_SINK",
+						"type": "DatasetReference"
+					},
+					"name": "ordersSink"
 				}
 			],
 			"transformations": [
@@ -106,7 +113,22 @@
 					"name": "flattenMessages"
 				},
 				{
-					"name": "select1"
+					"name": "selectMessageInfo"
+				},
+				{
+					"name": "ItemTotal"
+				},
+				{
+					"name": "SelectIDandItemTotal"
+				},
+				{
+					"name": "addItemTotal"
+				},
+				{
+					"name": "joinTotal"
+				},
+				{
+					"name": "TotalToDec"
 				}
 			],
 			"scriptLines": [
@@ -228,7 +250,25 @@
 				"          DateTime = Messages.DateTime",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1",
+				"     skipDuplicateMapOutputs: true) ~> selectMessageInfo",
+				"orderdetails derive(ItemTotal = multiply(quantity, price)) ~> ItemTotal",
+				"ItemTotal select(mapColumn(",
+				"          orderid,",
+				"          ItemTotal",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectIDandItemTotal",
+				"SelectIDandItemTotal aggregate(groupBy(orderid),",
+				"     ItemTotal = sum(ItemTotal)) ~> addItemTotal",
+				"orders, addItemTotal join(orders@orderid == addItemTotal@orderid,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinTotal",
+				"joinTotal cast(output(",
+				"          ItemTotal as decimal(10,0)",
+				"     ),",
+				"     errors: true) ~> TotalToDec",
 				"SelectFields sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -291,7 +331,7 @@
 				"          ConversationID = INTConversationID,",
 				"          CustomerID",
 				"     )) ~> conversations",
-				"select1 sink(allowSchemaDrift: true,",
+				"selectMessageInfo sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          ConversationID as integer,",
@@ -314,7 +354,31 @@
 				"          MessageSender = Sender,",
 				"          Message,",
 				"          Timestamp = DateTime",
-				"     )) ~> conversationMessages"
+				"     )) ~> conversationMessages",
+				"TotalToDec sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          OrderID as integer,",
+				"          CustomerID as integer,",
+				"          PaymentStatus as string,",
+				"          OrderTotal as decimal(10,2),",
+				"          OrderDate as timestamp",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          OrderID = orders@orderid,",
+				"          CustomerID = customerid,",
+				"          PaymentStatus = paymentstatus,",
+				"          OrderTotal = ItemTotal,",
+				"          OrderDate = orderdate",
+				"     )) ~> ordersSink"
 			]
 		}
 	}
