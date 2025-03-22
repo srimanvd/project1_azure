@@ -7,6 +7,10 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "SrimanProject1DataFactory"
 		},
+		"AzureSqlDatabase_SINK_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'AzureSqlDatabase_SINK'"
+		},
 		"Blob_realistic_customer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'Blob_realistic_customer'"
@@ -22,10 +26,6 @@
 		"PostgresDB_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'PostgresDB'"
-		},
-		"AzureSqlDatabase_SINK_password": {
-			"type": "secureString",
-			"metadata": "Secure string for 'password' of 'AzureSqlDatabase_SINK'"
 		},
 		"AzureSqlDatabase_SINK_properties_typeProperties_server": {
 			"type": "string",
@@ -66,6 +66,9 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"AzureSqlDatabase_SINK_password": {
+						"value": "[parameters('AzureSqlDatabase_SINK_password')]"
+					},
 					"Blob_realistic_customer_connectionString": {
 						"value": "[parameters('Blob_realistic_customer_connectionString')]"
 					},
@@ -77,9 +80,6 @@
 					},
 					"PostgresDB_connectionString": {
 						"value": "[parameters('PostgresDB_connectionString')]"
-					},
-					"AzureSqlDatabase_SINK_password": {
-						"value": "[parameters('AzureSqlDatabase_SINK_password')]"
 					},
 					"AzureSqlDatabase_SINK_properties_typeProperties_server": {
 						"value": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_server')]"

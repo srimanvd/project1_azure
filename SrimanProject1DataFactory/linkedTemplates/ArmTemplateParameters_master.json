@@ -5,6 +5,9 @@
 		"factoryName": {
 			"value": "SrimanProject1DataFactory"
 		},
+		"AzureSqlDatabase_SINK_password": {
+			"value": ""
+		},
 		"Blob_realistic_customer_connectionString": {
 			"value": ""
 		},
@@ -15,9 +18,6 @@
 			"value": ""
 		},
 		"PostgresDB_connectionString": {
-			"value": ""
-		},
-		"AzureSqlDatabase_SINK_password": {
 			"value": ""
 		},
 		"AzureSqlDatabase_SINK_properties_typeProperties_server": {

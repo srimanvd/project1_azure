@@ -7,6 +7,10 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "SrimanProject1DataFactory"
 		},
+		"AzureSqlDatabase_SINK_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'AzureSqlDatabase_SINK'"
+		},
 		"Blob_realistic_customer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'Blob_realistic_customer'"
@@ -22,10 +26,6 @@
 		"PostgresDB_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'PostgresDB'"
-		},
-		"AzureSqlDatabase_SINK_password": {
-			"type": "secureString",
-			"metadata": "Secure string for 'password' of 'AzureSqlDatabase_SINK'"
 		},
 		"AzureSqlDatabase_SINK_properties_typeProperties_server": {
 			"type": "string",
@@ -44,6 +44,28 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase_SINK')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_server')]",
+					"database": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('AzureSqlDatabase_SINK_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/Blob_realistic_customer')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
@@ -98,130 +120,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase_SINK')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureSqlDatabase",
-				"typeProperties": {
-					"server": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_server')]",
-					"database": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_database')]",
-					"encrypt": "mandatory",
-					"trustServerCertificate": false,
-					"authenticationType": "SQL",
-					"userName": "[parameters('AzureSqlDatabase_SINK_properties_typeProperties_userName')]",
-					"password": {
-						"type": "SecureString",
-						"value": "[parameters('AzureSqlDatabase_SINK_password')]"
-					}
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/CosmosDB_Product_SOURCE')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "CosmosDB",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "CosmosDbSqlApiCollection",
-				"schema": {
-					"type": "object",
-					"properties": {
-						"ProductID": {
-							"type": "integer"
-						},
-						"ProductName": {
-							"type": "string"
-						},
-						"Price": {
-							"type": "number"
-						}
-					}
-				},
-				"typeProperties": {
-					"collectionName": "products"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/CosmosDB')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/CosmosDB_realistic_customer_SOURCE')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "CosmosDB",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "CosmosDbSqlApiCollection",
-				"schema": {
-					"type": "object",
-					"properties": {
-						"CustomerID": {
-							"type": "integer"
-						},
-						"Profile": {
-							"type": "object",
-							"properties": {
-								"FirstName": {
-									"type": "string"
-								},
-								"LastName": {
-									"type": "string"
-								},
-								"Email": {
-									"type": "string"
-								}
-							}
-						},
-						"Conversations": {
-							"type": "array",
-							"items": {
-								"type": "object",
-								"properties": {
-									"ConversationID": {
-										"type": "string"
-									},
-									"Messages": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"DateTime": {
-													"type": "string"
-												},
-												"Sender": {
-													"type": "string"
-												},
-												"Message": {
-													"type": "string"
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				},
-				"typeProperties": {
-					"collectionName": "realistic_customers"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/CosmosDB')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/AzurePostgreSqlTable_Orders_SOURCE')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -265,59 +163,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/PostgresDB')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/BlobStorage_realistic_customer_SOURCE')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "Blob_realistic_customer",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "realistic_customers.csv",
-						"container": "historicaldata"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": [
-					{
-						"name": "CustomerID",
-						"type": "String"
-					},
-					{
-						"name": "Name",
-						"type": "String"
-					},
-					{
-						"name": "Email",
-						"type": "String"
-					},
-					{
-						"name": "Phone",
-						"type": "String"
-					},
-					{
-						"name": "LastPurchaseDate",
-						"type": "String"
-					},
-					{
-						"name": "TotalSpent",
-						"type": "String"
-					}
-				]
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/Blob_realistic_customer')]"
 			]
 		},
 		{
@@ -577,6 +422,161 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/BlobStorage_realistic_customer_SOURCE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Blob_realistic_customer",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "realistic_customers.csv",
+						"container": "historicaldata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "CustomerID",
+						"type": "String"
+					},
+					{
+						"name": "Name",
+						"type": "String"
+					},
+					{
+						"name": "Email",
+						"type": "String"
+					},
+					{
+						"name": "Phone",
+						"type": "String"
+					},
+					{
+						"name": "LastPurchaseDate",
+						"type": "String"
+					},
+					{
+						"name": "TotalSpent",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Blob_realistic_customer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CosmosDB_Product_SOURCE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "CosmosDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "CosmosDbSqlApiCollection",
+				"schema": {
+					"type": "object",
+					"properties": {
+						"ProductID": {
+							"type": "integer"
+						},
+						"ProductName": {
+							"type": "string"
+						},
+						"Price": {
+							"type": "number"
+						}
+					}
+				},
+				"typeProperties": {
+					"collectionName": "products"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/CosmosDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CosmosDB_realistic_customer_SOURCE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "CosmosDB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "CosmosDbSqlApiCollection",
+				"schema": {
+					"type": "object",
+					"properties": {
+						"CustomerID": {
+							"type": "integer"
+						},
+						"Profile": {
+							"type": "object",
+							"properties": {
+								"FirstName": {
+									"type": "string"
+								},
+								"LastName": {
+									"type": "string"
+								},
+								"Email": {
+									"type": "string"
+								}
+							}
+						},
+						"Conversations": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"ConversationID": {
+										"type": "string"
+									},
+									"Messages": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"DateTime": {
+													"type": "string"
+												},
+												"Sender": {
+													"type": "string"
+												},
+												"Message": {
+													"type": "string"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"typeProperties": {
+					"collectionName": "realistic_customers"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/CosmosDB')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -706,6 +706,21 @@
 						},
 						{
 							"name": "joinTotal"
+						},
+						{
+							"name": "AlterRow1"
+						},
+						{
+							"name": "AlterRow2"
+						},
+						{
+							"name": "AlterRow3"
+						},
+						{
+							"name": "AlterRow4"
+						},
+						{
+							"name": "AlterRow5"
 						}
 					],
 					"scriptLines": [
@@ -767,8 +782,7 @@
 						"    substring(regexReplace(Phone, '[^0-9]', ''), 7, 4)\r",
 						"  ),\r",
 						"  \"invalid\"\r",
-						")\r",
-						") ~> FormattedPhoneNumber",
+						")) ~> FormattedPhoneNumber",
 						"CosmosRealisticCustomers, customerIDtoINT join(CosmosRealisticCustomers@CustomerID == customerIDtoINT@CustomerID,",
 						"     joinType:'left',",
 						"     matchType:'exact',",
@@ -790,7 +804,7 @@
 						"joinBlob derive(AlterateEmail = iif(Email == Profile.Email, 'None', Email)) ~> AlternateEmail",
 						"joinBlob select(mapColumn(",
 						"          CustomerID = CosmosRealisticCustomers@CustomerID,",
-						"          Conversations = Conversations",
+						"          Conversations",
 						"     ),",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true) ~> SelectConversation",
@@ -842,7 +856,12 @@
 						"     matchType:'exact',",
 						"     ignoreSpaces: false,",
 						"     broadcast: 'auto')~> joinTotal",
-						"SelectFields sink(allowSchemaDrift: true,",
+						"SelectFields alterRow(upsertIf(true())) ~> AlterRow1",
+						"AlternateEmail alterRow(upsertIf(true())) ~> AlterRow2",
+						"castID alterRow(upsertIf(true())) ~> AlterRow3",
+						"selectMessageInfo alterRow(upsertIf(true())) ~> AlterRow4",
+						"joinTotal alterRow(upsertIf(true())) ~> AlterRow5",
+						"AlterRow1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          CustomerID as integer,",
@@ -854,7 +873,8 @@
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
-						"     upsertable:false,",
+						"     upsertable:true,",
+						"     keys:['CustomerID'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -866,7 +886,7 @@
 						"          PrimaryEmailAddress = Email,",
 						"          PhoneNumber = Phone",
 						"     )) ~> CustomerSINK",
-						"AlternateEmail sink(allowSchemaDrift: true,",
+						"AlterRow2 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          AlternateEmailID as integer,",
@@ -876,7 +896,8 @@
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
-						"     upsertable:false,",
+						"     upsertable:true,",
+						"     keys:['AlternateEmailID'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -886,7 +907,7 @@
 						"          CustomerID = CosmosRealisticCustomers@CustomerID,",
 						"          EmailAddress = AlterateEmail",
 						"     )) ~> alternateEmails",
-						"castID sink(allowSchemaDrift: true,",
+						"AlterRow3 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          ConversationID as integer,",
@@ -895,7 +916,8 @@
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
-						"     upsertable:false,",
+						"     upsertable:true,",
+						"     keys:['ConversationID','CustomerID'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -904,7 +926,7 @@
 						"          ConversationID = INTConversationID,",
 						"          CustomerID",
 						"     )) ~> conversations",
-						"selectMessageInfo sink(allowSchemaDrift: true,",
+						"AlterRow4 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          ConversationID as integer,",
@@ -916,7 +938,8 @@
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
-						"     upsertable:false,",
+						"     upsertable:true,",
+						"     keys:['ConversationID'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -928,7 +951,7 @@
 						"          Message,",
 						"          Timestamp = DateTime",
 						"     )) ~> conversationMessages",
-						"joinTotal sink(allowSchemaDrift: true,",
+						"AlterRow5 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          OrderID as integer,",
@@ -940,7 +963,8 @@
 						"     deletable:false,",
 						"     insertable:true,",
 						"     updateable:false,",
-						"     upsertable:false,",
+						"     upsertable:true,",
+						"     keys:['OrderID','CustomerID'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
