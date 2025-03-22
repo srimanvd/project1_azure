@@ -721,6 +721,9 @@
 						},
 						{
 							"name": "AlterRow5"
+						},
+						{
+							"name": "supportAgent"
 						}
 					],
 					"scriptLines": [
@@ -859,8 +862,9 @@
 						"SelectFields alterRow(upsertIf(true())) ~> AlterRow1",
 						"AlternateEmail alterRow(upsertIf(true())) ~> AlterRow2",
 						"castID alterRow(upsertIf(true())) ~> AlterRow3",
-						"selectMessageInfo alterRow(upsertIf(true())) ~> AlterRow4",
+						"supportAgent alterRow(upsertIf(true())) ~> AlterRow4",
 						"joinTotal alterRow(upsertIf(true())) ~> AlterRow5",
+						"selectMessageInfo derive({ Support} = iifNull(SupportAgent, 'NO SUPPORT AGENT')) ~> supportAgent",
 						"AlterRow1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
@@ -946,7 +950,7 @@
 						"     errorHandlingOption: 'stopOnFirstError',",
 						"     mapColumn(",
 						"          ConversationID = INTConversationID,",
-						"          SupportAgent,",
+						"          SupportAgent = { Support},",
 						"          MessageSender = Sender,",
 						"          Message,",
 						"          Timestamp = DateTime",
