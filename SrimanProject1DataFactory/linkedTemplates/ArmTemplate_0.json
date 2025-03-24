@@ -942,7 +942,7 @@
 						"     insertable:true,",
 						"     updateable:false,",
 						"     upsertable:true,",
-						"     keys:['ConversationID','Timestamp','MessageSender','Message','SupportAgent'],",
+						"     keys:['ConversationID','Timestamp'],",
 						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
