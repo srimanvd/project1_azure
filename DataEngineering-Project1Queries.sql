@@ -12,7 +12,8 @@ RIGHT JOIN [dbo].[Orders] AS O
 ON CA.CustomerID = O.CustomerID
 WHERE O.PaymentStatus = 'Failed' AND CA.SupportAgent != 'NO SUPPORT AGENT'
 
-
+-----------------------------------------------------------------------------
+    
 SELECT C.CustomerID, (C.FirstName + ' ' + C.LastName) AS Name, C.PrimaryEmailAddress, (AE.EmailAddress) AS AlternateEmailAddress
 FROM [dbo].[AlternateEmails] AS AE
 RIGHT JOIN [dbo].[Customer] AS C
